@@ -8,6 +8,10 @@ import App from "./App.tsx";
 import Playground from "./pages/Playground.tsx";
 import DocsIndex from "./pages/docs/DocsIndex.tsx";
 import DocEmbed from "./pages/docs/DocEmbed.tsx";
+import LabourLayout from "./pages/labour/LabourLayout.tsx";
+import LabourDashboard from "./pages/labour/LabourDashboard.tsx";
+import PartographView from "./pages/labour/PartographView.tsx";
+import NewCase from "./pages/labour/NewCase.tsx";
 import "./index.css";
 import "@radix-ui/themes/styles.css";
 
@@ -69,6 +73,13 @@ createRoot(document.getElementById("root")!).render(
                   element={<DocPage component={key} />}
                 />
               ))}
+              {/* Labour Room System */}
+              <Route path="/labour" element={<LabourLayout />}>
+                <Route index element={<LabourDashboard />} />
+                <Route path="cases" element={<LabourDashboard />} />
+                <Route path="cases/new" element={<NewCase />} />
+                <Route path="partograph/:id" element={<PartographView />} />
+              </Route>
             </Routes>
           </RadixTheme>
         </ThemeProvider>
