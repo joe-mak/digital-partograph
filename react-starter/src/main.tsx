@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { HeroUIProvider } from "@heroui/react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Theme as RadixTheme } from "@radix-ui/themes";
@@ -63,7 +63,7 @@ createRoot(document.getElementById("root")!).render(
         <ThemeProvider theme={muiTheme}>
           <RadixTheme accentColor="blue" radius="medium">
             <Routes>
-              <Route path="/" element={<App />} />
+              <Route path="/" element={<Navigate to="/labour" replace />} />
               <Route path="/playground" element={<Playground />} />
               <Route path="/docs" element={<DocsIndex />} />
               {Object.keys(heroUIDocs).map((key) => (
