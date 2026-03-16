@@ -58,7 +58,7 @@ function DocPage({ component }: { component: string }) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/digital-partograph">
       <HeroUIProvider>
         <ThemeProvider theme={muiTheme}>
           <RadixTheme accentColor="blue" radius="medium">
