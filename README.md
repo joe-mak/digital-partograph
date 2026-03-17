@@ -63,7 +63,7 @@ npm run dev
 
 ระบบใช้ GitHub Actions สำหรับ Deploy ไปยัง GitHub Pages อัตโนมัติเมื่อ Push ไป Branch `main`
 
-**URL:** https://joe-mak.github.io/digital-partograph/
+**URL:** https://bms-uxui.github.io/digital-partograph/
 
 ## โครงสร้างไฟล์
 
