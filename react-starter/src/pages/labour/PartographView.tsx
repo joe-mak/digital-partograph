@@ -518,7 +518,14 @@ function PartographSVG({ records, hoveredCol, onColHover, onDilationClick, toolt
 
       {/* ═══ Drugs ═══ */}
       <TextRow y={drY} h={drH} label="Drugs given" sublabel="and IV fluids" tooltip={"ยาและสารน้ำ (Drugs & IV Fluids)\nบันทึกชื่อยา ขนาด และอัตราการให้\nเช่น Oxytocin, ยาแก้ปวด, ยาปฏิชีวนะ\nรวมถึงสารน้ำทางหลอดเลือด"} />
-      {records.filter((r) => r.maternal?.drugs).map((r) => <text key={r.slotIndex} x={cxSlot(r.slotIndex) + CW / 4} y={drY + 18} textAnchor="middle" fontSize={7} fill="#000">{r.maternal!.drugs}</text>)}
+      {records.filter((r) => r.maternal?.drugs).map((r, i) => {
+        const drugText = r.maternal!.drugs.length > 15 ? r.maternal!.drugs.slice(0, 15) + "…" : r.maternal!.drugs;
+        const row = i % 2;
+        return <text key={r.slotIndex} x={cxSlot(r.slotIndex) + CW / 4} y={drY + 12 + row * 12} textAnchor="start" fontSize={6} fill="#000">
+          <title>{r.maternal!.drugs}</title>
+          {drugText}
+        </text>;
+      })}
 
       {/* ═══ Pulse & BP ═══ */}
       <Grid y={vY} h={vH} rows={12} />
@@ -621,6 +628,27 @@ function PartographSVG({ records, hoveredCol, onColHover, onDilationClick, toolt
               <circle cx={px} cy={py} r={5} fill="#fff" stroke="#0d9488" strokeWidth={2} style={{ animation: `${pulse_anim} 1.5s ease-in-out infinite` }} />
             </>);
           })()}
+          {/* Contractions preview */}
+          {preview.contractionFreq && (() => {
+            const bx = px - CW / 4 + 2, bw = CW / 2 - 4;
+            const dur = preview.contractionDuration || "moderate";
+            return Array.from({ length: preview.contractionFreq }, (_, bi) => {
+              const by = coY + coH - (bi + 1) * coRH + 1, bh = coRH - 2;
+              return (
+                <g key={`cp-${bi}`} style={{ animation: `${pulse_anim} 1.5s ease-in-out infinite` }}>
+                  <defs><clipPath id={`clip-cp-${bi}`}><rect x={bx} y={by} width={bw} height={bh} /></clipPath></defs>
+                  <rect x={bx} y={by} width={bw} height={bh} fill={dur === "strong" ? "#0d9488" : "rgba(13,148,136,0.15)"} stroke="#0d9488" strokeWidth={1} rx={2} />
+                  {dur === "moderate" && (
+                    <g clipPath={`url(#clip-cp-${bi})`}>
+                      {Array.from({ length: Math.ceil((bw + bh) / 4) + 1 }, (_, li) => (
+                        <line key={li} x1={bx + li * 4} y1={by} x2={bx + li * 4 - bh} y2={by + bh} stroke="#0d9488" strokeWidth={0.8} />
+                      ))}
+                    </g>
+                  )}
+                </g>
+              );
+            });
+          })()}
           {/* BP preview */}
           {preview.bpSystolic && preview.bpDiastolic && (
             <g style={{ animation: `${pulse_anim} 1.5s ease-in-out infinite` }}>
@@ -694,7 +722,24 @@ export default function PartographView() {
   const [lastUndo, setLastUndo] = useState<TimeSlotRecord | null>(null);
 
   const panelRef = useRef<HTMLDivElement>(null);
-  const doSave = useCallback((rec: TimeSlotRecord) => { setRecords((p) => [...p, rec]); setFhr(""); setLastUndo(rec); setSaveFlash(true); setTimeout(() => { setSaveFlash(false); setLastUndo(null); }, 4000); panelRef.current?.scrollTo({ top: 0, behavior: "smooth" }); }, []);
+  const chartRef = useRef<HTMLDivElement>(null);
+  const doSave = useCallback((rec: TimeSlotRecord) => {
+    setRecords((p) => [...p, rec]); setFhr(""); setDilation(rec.labour?.dilation ?? dilation); setDescent(String(rec.labour?.descent ?? descent)); setLastUndo(rec); setSaveFlash(true);
+    setTimeout(() => { setSaveFlash(false); setLastUndo(null); }, 4000);
+    panelRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    // Scroll chart so the next time slot is centered
+    setTimeout(() => {
+      if (chartRef.current) {
+        const el = chartRef.current;
+        const nextSlot = rec.slotIndex + 1;
+        const nextHr = nextSlot / 2;
+        const fraction = (LBL + nextHr * (GW / COLS)) / W;
+        const targetX = fraction * el.scrollWidth;
+        const center = targetX - el.clientWidth / 2;
+        el.scrollTo({ left: Math.max(0, center), behavior: "smooth" });
+      }
+    }, 100);
+  }, []);
   const handleUndo = useCallback(() => { if (lastUndo) { setRecords((p) => p.filter((r) => r !== lastUndo)); setLastUndo(null); setSaveFlash(false); } }, [lastUndo]);
   const handleSave = useCallback(() => { const v = parseInt(fhr); if (!v || v < 60 || v > 220) return;
     doSave({ slotIndex: nsi, time: nt, fetal: { fhr: v, liquor, moulding },
@@ -741,14 +786,14 @@ export default function PartographView() {
         </CardBody>
       </Card>
 
-      <div className="flex flex-col md:flex-row-reverse gap-3 flex-1 min-h-0 mt-3">
+      <div className="flex flex-col lg:flex-row-reverse gap-3 flex-1 min-h-0 mt-3">
         {/* Partograph */}
-        <div className="md:w-[65%] min-w-0 relative overflow-auto pb-4 scrollbar-hidden">
-          <div className="border border-black overflow-x-auto overflow-y-hidden bg-white scrollbar-hidden">
+        <div className="lg:w-[72%] min-w-0 relative overflow-auto pb-4 scrollbar-hidden min-h-100">
+          <div ref={chartRef} className="border border-black overflow-x-auto overflow-y-hidden bg-white scrollbar-hidden">
             <PartographSVG records={records} hoveredCol={hoveredCol} onColHover={setHoveredCol} onDilationClick={(cm) => setDilation(cm)} tooltipPoint={tooltipPt} onPointClick={setTooltipPt} nextSlotIndex={nsi}
-              preview={nsi < COLS * 2 ? {
+              preview={nsi < COLS * 2 && fhr ? {
                 slotIndex: nsi,
-                fhr: fhr ? parseInt(fhr) || null : null,
+                fhr: parseInt(fhr) || null,
                 liquor, moulding,
                 dilation,
                 descent: parseInt(descent) || null,
@@ -774,7 +819,7 @@ export default function PartographView() {
         </div>
 
         {/* Data entry panel */}
-        <div className="md:w-[35%] min-w-0 flex flex-col relative">
+        <div className="lg:w-[28%] min-w-0 flex flex-col relative">
           {/* Fixed header row */}
           {nsi >= COLS * 2 ? (
             <Card className="shadow-sm shrink-0">
@@ -860,27 +905,33 @@ export default function PartographView() {
 
                     <div>
                       <Label tip="หน่วย cm · Latent phase 0-3 cm (≤8 ชม.) · Active phase ≥4 cm (1 cm/ชม.) · คลิกบนกราฟเพื่อกำหนดค่าได้" className="text-base font-semibold text-gray-800 mb-1.5">ปากมดลูก (Cervix)</Label>
-                      <p className="text-xs text-indigo-600 font-semibold mb-1">Latent Phase (0-3 cm)</p>
-                      <div className="grid grid-cols-4 gap-1.5 mb-2">
-                        {[0, 1, 2, 3].map((cm) => (
-                          <button key={cm} onClick={() => setDilation(cm)}
-                            className={`h-12 rounded-lg text-base font-bold border-2 transition-all active:scale-95 ${
-                              dilation === cm ? "bg-indigo-600 text-white border-indigo-600" : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:border-indigo-400"
-                            }`}>
-                            {cm}
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-800 font-semibold mb-1">Active Phase (4-10 cm)</p>
-                      <div className="grid grid-cols-7 gap-1.5">
-                        {[4, 5, 6, 7, 8, 9, 10].map((cm) => (
-                          <button key={cm} onClick={() => setDilation(cm)}
-                            className={`h-12 rounded-lg text-base font-bold border-2 transition-all active:scale-95 ${
-                              dilation === cm ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-300"
-                            }`}>
-                            {cm}
-                          </button>
-                        ))}
+                      <div className="flex flex-wrap gap-1.5 items-end">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-indigo-600 font-semibold mb-1">Latent (0-3)</p>
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {[0, 1, 2, 3].map((cm) => (
+                              <button key={cm} onClick={() => setDilation(cm)}
+                                className={`h-11 rounded-lg text-base font-bold border-2 transition-all active:scale-95 ${
+                                  dilation === cm ? "bg-indigo-600 text-white border-indigo-600" : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:border-indigo-400"
+                                }`}>
+                                {cm}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex-[1.75] min-w-0">
+                          <p className="text-xs text-gray-600 font-semibold mb-1">Active (4-10)</p>
+                          <div className="grid grid-cols-7 gap-1.5">
+                            {[4, 5, 6, 7, 8, 9, 10].map((cm) => (
+                              <button key={cm} onClick={() => setDilation(cm)}
+                                className={`h-11 rounded-lg text-base font-bold border-2 transition-all active:scale-95 ${
+                                  dilation === cm ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-300"
+                                }`}>
+                                {cm}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -914,10 +965,10 @@ export default function PartographView() {
                       </div>
                       <div className="flex-1">
                         <Label tip="ความยาวแต่ละครั้ง" className="text-base font-semibold text-gray-800 mb-1.5">ระยะเวลา</Label>
-                        <div className="space-y-1.5">
-                          {[{ k: "light", l: "<20 วินาที" }, { k: "moderate", l: "20-40 วินาที" }, { k: "strong", l: ">40 วินาที" }].map((o) => (
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[{ k: "light", l: "<20วิ" }, { k: "moderate", l: "20-40วิ" }, { k: "strong", l: ">40วิ" }].map((o) => (
                             <button key={o.k} onClick={() => setContractionDuration(o.k)}
-                              className={`w-full h-11 rounded-lg text-sm font-semibold border-2 transition-all active:scale-95 ${
+                              className={`h-12 rounded-lg text-sm font-bold border-2 transition-all active:scale-95 ${
                                 contractionDuration === o.k ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-300"
                               }`}>
                               {o.l}
