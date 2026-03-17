@@ -74,7 +74,3 @@ react-starter/src/pages/labour/
   PartographView.tsx    — หน้า Partograph + แผงบันทึกข้อมูล
   NewCase.tsx           — หน้าสร้างเคสใหม่
 ```
-
-## ผู้พัฒนา
-
-พัฒนาโดยใช้ Claude Code (Anthropic) ร่วมกับ UX/UI Designer
