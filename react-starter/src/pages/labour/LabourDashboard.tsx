@@ -1,5 +1,5 @@
 import { useState } from "react";
-import motherSvg from "../../assets/mother.svg";
+import motherPng from "../../assets/Mother.png";
 import { Link } from "react-router";
 import {
   Card,
@@ -157,9 +157,9 @@ export default function LabourDashboard() {
   return (
     <div className="space-y-6">
       {/* ── Hero Section ── */}
-      <div className="bg-linear-to-r from-teal-700 to-teal-600 rounded-2xl px-8 py-8 text-white relative overflow-hidden">
+      <div className="bg-linear-to-r from-teal-700 to-teal-600 rounded-2xl px-5 md:px-8 py-6 md:py-8 text-white relative overflow-hidden">
         {/* Mother character — offset center */}
-        <img src={motherSvg} alt="" className="absolute right-32 -bottom-28 h-[200%] opacity-100 pointer-events-none select-none" />
+        <img src={motherPng} alt="" className="absolute right-10 md:right-40 -top-6 h-[120%] md:h-[150%] opacity-50 md:opacity-100 pointer-events-none select-none" />
         {/* Decorative flowers — corners */}
         <svg className="absolute top-0 left-0 w-24 h-24 pointer-events-none" viewBox="0 0 100 100" opacity={0.15}>
           <circle cx="20" cy="20" r="8" fill="#0d9488" /><circle cx="12" cy="20" r="5" fill="#14b8a6" /><circle cx="28" cy="20" r="5" fill="#14b8a6" /><circle cx="20" cy="12" r="5" fill="#14b8a6" /><circle cx="20" cy="28" r="5" fill="#14b8a6" />
@@ -249,7 +249,7 @@ export default function LabourDashboard() {
               )}
             </button>
             {notiOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-72 lg:w-80 max-w-[90vw] bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
                 <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
                   <Bell size={16} className="text-gray-600" />
                   <span className="text-sm font-bold text-gray-900">การแจ้งเตือน</span>
@@ -281,7 +281,7 @@ export default function LabourDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {sortedPatients.map((patient) => {
             const borderClass =
               patient.status === "วิกฤต"

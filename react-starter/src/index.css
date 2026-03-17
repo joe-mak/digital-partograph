@@ -3,6 +3,16 @@
 @plugin './hero.ts';
 @source '../node_modules/@heroui/theme/dist/**/*.{js,mjs}';
 
+/* Hide number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 /* Hide scrollbar but keep scroll */
 @utility scrollbar-hidden {
   -ms-overflow-style: none;

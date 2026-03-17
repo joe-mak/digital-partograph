@@ -49,7 +49,7 @@ export default function LabourLayout() {
           </div>
 
           {/* Desktop nav — center */}
-          <nav className="hidden md:flex items-center gap-1 justify-center flex-1">
+          <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 justify-center flex-1">
             {navItems.map((item) => {
               const active = isActive(item.path);
               return (
@@ -57,7 +57,7 @@ export default function LabourLayout() {
                   key={item.path}
                   to={item.path}
                   className={[
-                    "flex items-center gap-2 px-4 py-2.5 rounded-lg text-base font-semibold transition-colors",
+                    "flex items-center gap-1.5 px-3 lg:px-4 py-2 rounded-lg text-sm lg:text-base font-semibold transition-colors",
                     active
                       ? "bg-teal-600 text-white"
                       : "text-gray-500 hover:bg-gray-100 hover:text-gray-900",

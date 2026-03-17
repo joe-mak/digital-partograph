@@ -10,6 +10,7 @@ import {
   Tooltip,
   Card,
   CardBody,
+  Switch,
   Modal,
   ModalContent,
   ModalHeader,
@@ -99,8 +100,8 @@ function computeAlerts(records: TimeSlotRecord[]): Alert[] {
     const activeStart = lr.find((r) => r.labour!.dilation >= 4);
     if (!activeStart && lastRec.labour!.dilation < 4) {
       const latentHrs = (lastRec.slotIndex - firstRec.slotIndex) / 2;
-      if (latentHrs > 4) a.push({ level: "danger", message: `Latent phase นานเกิน 4 ชม. (${latentHrs.toFixed(1)} ชม.) — ต้องประเมินซ้ำ` });
-      else if (latentHrs > 3) a.push({ level: "warning", message: `Latent phase ${latentHrs.toFixed(1)} ชม. — ใกล้ครบ 4 ชม.` });
+      if (latentHrs > 8) a.push({ level: "danger", message: `Latent phase นานเกิน 8 ชม. (${latentHrs.toFixed(1)} ชม.) — ต้องประเมินซ้ำ` });
+      else if (latentHrs > 6) a.push({ level: "warning", message: `Latent phase ${latentHrs.toFixed(1)} ชม. — ใกล้ครบ 8 ชม.` });
     }
   }
   // Active phase alert/action lines
@@ -207,7 +208,7 @@ function PartographSVG({ records, hoveredCol, onColHover, onDilationClick, toolt
   // First record in active phase (dilation >= 4) — used for Alert/Action lines
   // Alert/Action lines start at the 4-hour latent phase limit
   const firstLabSlot = labRecs.length > 0 ? labRecs[0].slotIndex : 0;
-  const latent8Slot = firstLabSlot + 8; // 4 hrs = 8 half-hour slots
+  const latent8Slot = firstLabSlot + 16; // 8 hrs = 16 half-hour slots
   const alX = cx(latent8Slot / 2); // align to grid line, not data point offset
 
   const contrPerSlot = useMemo(() => {
@@ -279,19 +280,19 @@ function PartographSVG({ records, hoveredCol, onColHover, onDilationClick, toolt
       {/* Latent Phase shading (0-4 cm) */}
       {(() => {
         const firstLabRec = labRecs[0];
-        const latent8Slot = firstLabRec ? firstLabRec.slotIndex + 8 : 8; // 4 hrs = 8 half-hour slots
+        const latent8Slot = firstLabRec ? firstLabRec.slotIndex + 16 : 16; // 8 hrs = 16 half-hour slots
         const latent8X = cxSlot(Math.min(latent8Slot, COLS * 2 - 1));
         return (<>
-          {/* Normal latent zone (up to 4 hrs) */}
+          {/* Normal latent zone (up to 8 hrs) */}
           <rect x={LBL} y={yC(4)} width={Math.min(latent8X - LBL, GW)} height={yC(0) - yC(4)} fill="#e0e7ff" opacity={0.25} />
-          {/* Overdue latent zone (after 4 hrs) — red tint */}
+          {/* Overdue latent zone (after 8 hrs) — red tint */}
           {latent8Slot < COLS * 2 && (
             <rect x={latent8X} y={yC(4)} width={W - RR - latent8X} height={yC(0) - yC(4)} fill="#fecaca" opacity={0.2} />
           )}
           {/* 8-hour limit line */}
           {latent8Slot < COLS * 2 && (<>
             <line x1={latent8X} y1={yC(4)} x2={latent8X} y2={yC(0)} stroke="#4f46e5" strokeWidth={1.5} strokeDasharray="6 3" />
-            <text x={latent8X + 3} y={yC(0) - 4} fontSize={8} fill="#4f46e5" fontWeight={700}>4 ชม.</text>
+            <text x={latent8X + 3} y={yC(0) - 4} fontSize={8} fill="#4f46e5" fontWeight={700}>8 ชม.</text>
           </>)}
         </>);
       })()}
@@ -305,10 +306,10 @@ function PartographSVG({ records, hoveredCol, onColHover, onDilationClick, toolt
       <text x={14} y={cY + cH * 0.68} fontSize={9} fill="#4f46e5" fontWeight={700}>Latent</text>
       <text x={14} y={cY + cH * 0.74} fontSize={9} fill="#4f46e5" fontWeight={700}>Phase</text>
       <text x={14} y={cY + cH * 0.80} fontSize={8} fill="#4f46e5">0-4 cm</text>
-      <text x={14} y={cY + cH * 0.86} fontSize={7} fill="#4f46e5">≤4 ชม.</text>
+      <text x={14} y={cY + cH * 0.86} fontSize={7} fill="#4f46e5">≤8 ชม.</text>
 
       <g style={{ cursor: "help" }}>
-        <title>{"ปากมดลูก (Cervical Dilatation)\nPlot ด้วยเครื่องหมาย X\n\nLatent Phase (ระยะปากมดลูกเปิดช้า) = 0-4 cm\n- มดลูกหดตัวไม่สม่ำเสมอ\n- ใช้เวลาได้ถึง 4 ชม.\n\nActive Phase (ระยะปากมดลูกเปิดเร็ว) = 4-10 cm\n- อัตราปกติ ≥1 cm/ชม.\n- เส้น Alert/Action เริ่มนับจากจุดนี้\n\nคลิกบนกราฟเพื่อกำหนดค่าได้โดยตรง"}</title>
+        <title>{"ปากมดลูก (Cervical Dilatation)\nPlot ด้วยเครื่องหมาย X\n\nLatent Phase (ระยะปากมดลูกเปิดช้า) = 0-4 cm\n- มดลูกหดตัวไม่สม่ำเสมอ\n- ใช้เวลาได้ถึง 8 ชม.\n\nActive Phase (ระยะปากมดลูกเปิดเร็ว) = 4-10 cm\n- อัตราปกติ ≥1 cm/ชม.\n- เส้น Alert/Action เริ่มนับจากจุดนี้\n\nคลิกบนกราฟเพื่อกำหนดค่าได้โดยตรง"}</title>
         <rect x={4} y={cY + cH * 0.22} width={LBL - 8} height={cH * 0.25} fill="transparent" />
         <text x={14} y={cY + cH * 0.30} fontSize={9} fill="#000">Cervix (cm)</text>
         <text x={14} y={cY + cH * 0.36} fontSize={8} fill="#000">[Plot X]</text>
@@ -424,7 +425,7 @@ function PartographSVG({ records, hoveredCol, onColHover, onDilationClick, toolt
           <text x={rx - 178} y={ly + 24} fontSize={11} fill="#000" fontWeight={500}>O = ศีรษะทารก (Descent)</text>
           {/* Latent Phase */}
           <rect x={rx - 195} y={ly + 34} width={10} height={10} fill="#e0e7ff" stroke="#4f46e5" strokeWidth={1} rx={1} />
-          <text x={rx - 182} y={ly + 43} fontSize={10} fill="#4f46e5" fontWeight={600}>Latent Phase (0-4 cm, ≤4 ชม.)</text>
+          <text x={rx - 182} y={ly + 43} fontSize={10} fill="#4f46e5" fontWeight={600}>Latent Phase (0-4 cm, ≤8 ชม.)</text>
           {/* Zones */}
           <rect x={rx - 195} y={ly + 50} width={10} height={10} fill="#d97706" opacity={0.5} rx={1} />
           <text x={rx - 182} y={ly + 59} fontSize={10} fill="#d97706" fontWeight={500}>เฝ้าระวัง (Alert zone)</text>
@@ -692,12 +693,13 @@ export default function PartographView() {
   const isH = nsi % 2 === 0; const el = records.length * 30;
   const [lastUndo, setLastUndo] = useState<TimeSlotRecord | null>(null);
 
-  const doSave = useCallback((rec: TimeSlotRecord) => { setRecords((p) => [...p, rec]); setFhr(""); setLastUndo(rec); setSaveFlash(true); setTimeout(() => { setSaveFlash(false); setLastUndo(null); }, 4000); }, []);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const doSave = useCallback((rec: TimeSlotRecord) => { setRecords((p) => [...p, rec]); setFhr(""); setLastUndo(rec); setSaveFlash(true); setTimeout(() => { setSaveFlash(false); setLastUndo(null); }, 4000); panelRef.current?.scrollTo({ top: 0, behavior: "smooth" }); }, []);
   const handleUndo = useCallback(() => { if (lastUndo) { setRecords((p) => p.filter((r) => r !== lastUndo)); setLastUndo(null); setSaveFlash(false); } }, [lastUndo]);
   const handleSave = useCallback(() => { const v = parseInt(fhr); if (!v || v < 60 || v > 220) return;
     doSave({ slotIndex: nsi, time: nt, fetal: { fhr: v, liquor, moulding },
-      labour: isH ? { dilation, descent: parseInt(descent) || 3, contractionFreq: parseInt(contractionFreq) || 3, contractionDuration: contractionDuration || "moderate", membrane: "intact" } : null,
-      maternal: isH ? { bpSystolic: parseInt(bpSystolic) || 120, bpDiastolic: parseInt(bpDiastolic) || 80, pulse: parseInt(pulse) || 80, temperature: temperature ? parseFloat(temperature) : null, urine, drugs: drugNotes } : null });
+      labour: { dilation, descent: parseInt(descent) || 3, contractionFreq: parseInt(contractionFreq) || 3, contractionDuration: contractionDuration || "moderate", membrane: "intact" },
+      maternal: { bpSystolic: parseInt(bpSystolic) || 120, bpDiastolic: parseInt(bpDiastolic) || 80, pulse: parseInt(pulse) || 80, temperature: temperature ? parseFloat(temperature) : null, urine, drugs: drugNotes } });
   }, [fhr, liquor, moulding, dilation, descent, contractionFreq, contractionDuration, bpSystolic, bpDiastolic, pulse, temperature, urine, drugNotes, nsi, nt, isH, doSave]);
 
   const tpRec = tooltipPt !== null ? records.find((r) => r.slotIndex === tooltipPt) ?? records[tooltipPt] : null;
@@ -713,16 +715,16 @@ export default function PartographView() {
             <span className="text-xs text-gray-400 font-mono">HN {patient.hn}</span>
             <span className="text-xs text-gray-400 font-mono">AN {patient.an}</span>
             <span className="text-xs text-gray-500">G{patient.gravida}P{patient.parity}</span>
-            <span className="text-xs text-gray-500">GA {patient.ga}</span>
-            <span className="text-xs text-gray-500">Admit {patient.admittedAt} น.</span>
-            <span className="text-xs text-gray-500">{Math.floor(el / 60)} ชม.</span>
+            <span className="text-xs text-gray-500 hidden lg:inline">GA {patient.ga}</span>
+            <span className="text-xs text-gray-500 hidden lg:inline">Admit {patient.admittedAt} น.</span>
+            <span className="text-xs text-gray-500 hidden lg:inline">{Math.floor(el / 60)} ชม.</span>
             {/* Status */}
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: lsConfig.color }} />
               <span className={`text-xs font-bold ${lsConfig.text}`}>{lsConfig.label}</span>
             </div>
             {alerts.length > 0 && alerts.map((a, i) => (
-              <span key={i} className={`text-xs ${a.level === "danger" ? "text-red-600 font-semibold" : "text-amber-600"}`}>{a.message}</span>
+              <span key={i} className={`text-xs hidden lg:inline ${a.level === "danger" ? "text-red-600 font-semibold" : "text-amber-600"}`}>{a.message}</span>
             ))}
             {saveFlash && (
               <span className="flex items-center gap-1 text-xs text-teal-600">
@@ -739,22 +741,22 @@ export default function PartographView() {
         </CardBody>
       </Card>
 
-      <div className="flex flex-col xl:flex-row-reverse gap-3 flex-1 min-h-0 mt-3">
+      <div className="flex flex-col md:flex-row-reverse gap-3 flex-1 min-h-0 mt-3">
         {/* Partograph */}
-        <div className="xl:w-[70%] min-w-0 relative overflow-auto pb-4 scrollbar-hidden">
+        <div className="md:w-[65%] min-w-0 relative overflow-auto pb-4 scrollbar-hidden">
           <div className="border border-black overflow-x-auto overflow-y-hidden bg-white scrollbar-hidden">
             <PartographSVG records={records} hoveredCol={hoveredCol} onColHover={setHoveredCol} onDilationClick={(cm) => setDilation(cm)} tooltipPoint={tooltipPt} onPointClick={setTooltipPt} nextSlotIndex={nsi}
               preview={nsi < COLS * 2 ? {
                 slotIndex: nsi,
                 fhr: fhr ? parseInt(fhr) || null : null,
                 liquor, moulding,
-                dilation: isH ? dilation : null,
-                descent: isH ? parseInt(descent) || null : null,
-                contractionFreq: isH ? parseInt(contractionFreq) || null : null,
-                contractionDuration: isH ? contractionDuration : null,
-                bpSystolic: isH ? parseInt(bpSystolic) || null : null,
-                bpDiastolic: isH ? parseInt(bpDiastolic) || null : null,
-                pulse: isH ? parseInt(pulse) || null : null,
+                dilation,
+                descent: parseInt(descent) || null,
+                contractionFreq: parseInt(contractionFreq) || null,
+                contractionDuration: contractionDuration,
+                bpSystolic: parseInt(bpSystolic) || null,
+                bpDiastolic: parseInt(bpDiastolic) || null,
+                pulse: parseInt(pulse) || null,
               } : null}
               showNowLine={showNowLine}
             />
@@ -772,7 +774,7 @@ export default function PartographView() {
         </div>
 
         {/* Data entry panel */}
-        <div className="xl:w-[30%] min-w-0 flex flex-col">
+        <div className="md:w-[35%] min-w-0 flex flex-col relative">
           {/* Fixed header row */}
           {nsi >= COLS * 2 ? (
             <Card className="shadow-sm shrink-0">
@@ -785,20 +787,14 @@ export default function PartographView() {
             <Card className="shadow-sm shrink-0 mb-3">
               <CardBody className="p-4 flex-row! items-center justify-between">
                 <span className="text-lg font-bold text-gray-900">บันทึกข้อมูล ณ <span className="text-teal-600 font-mono">{nt} น.</span></span>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <span className="text-xs text-gray-500">แสดงในกราฟ</span>
-                  <button
-                    onClick={() => setShowNowLine(!showNowLine)}
-                    className={`relative w-9 h-5 rounded-full transition-colors ${showNowLine ? "bg-teal-600" : "bg-gray-300"}`}
-                  >
-                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${showNowLine ? "translate-x-4" : ""}`} />
-                  </button>
-                </label>
+                <Switch size="sm" isSelected={showNowLine} onValueChange={setShowNowLine} classNames={{ wrapper: showNowLine ? "bg-teal-600!" : "" }}>
+                  <span className="text-xs text-gray-500">แสดงเวลาปัจจุบัน</span>
+                </Switch>
               </CardBody>
             </Card>
 
           {/* Scrollable cards */}
-          <div className="overflow-y-auto flex-1 min-h-0 space-y-3 scrollbar-hidden">
+          <div ref={panelRef} className="overflow-y-auto flex-1 min-h-0 space-y-3 scrollbar-hidden">
 
               {/* Card 1: Fetal — FHR, Liquor, Moulding */}
               <Card className="shadow-sm">
@@ -826,7 +822,7 @@ export default function PartographView() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div>
                       <Label tip="C = ใส (Clear) · I = ถุงไม่แตก (Intact) · M = ขี้เทา (Meconium) · B = เลือด (Blood) · A = ไม่มี (Absent)" className="text-base font-bold text-gray-900 mb-2">น้ำคร่ำ (Liquor)</Label>
                       <div className="grid grid-cols-5 gap-1.5">
@@ -858,13 +854,12 @@ export default function PartographView() {
               </Card>
 
               {/* Card 2: Labour — Cervix, Descent, Contractions */}
-              <Card className={`shadow-sm ${!isH ? "opacity-50 pointer-events-none" : ""}`}>
+              <Card className="shadow-sm">
                 <CardBody className="p-4 space-y-4">
-                  {!isH && <p className="text-xs text-amber-600 font-semibold bg-amber-50 px-3 py-1.5 rounded-lg">บันทึกรายชั่วโมง — ข้ามรอบนี้ (ทุก 30 นาที บันทึกเฉพาะ FHR)</p>}
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">ข้อมูลการคลอด (Labour)</p>
 
                     <div>
-                      <Label tip="หน่วย cm · Latent phase 0-3 cm (≤4 ชม.) · Active phase ≥4 cm (1 cm/ชม.) · คลิกบนกราฟเพื่อกำหนดค่าได้" className="text-base font-semibold text-gray-800 mb-1.5">ปากมดลูก (Cervix)</Label>
+                      <Label tip="หน่วย cm · Latent phase 0-3 cm (≤8 ชม.) · Active phase ≥4 cm (1 cm/ชม.) · คลิกบนกราฟเพื่อกำหนดค่าได้" className="text-base font-semibold text-gray-800 mb-1.5">ปากมดลูก (Cervix)</Label>
                       <p className="text-xs text-indigo-600 font-semibold mb-1">Latent Phase (0-3 cm)</p>
                       <div className="grid grid-cols-4 gap-1.5 mb-2">
                         {[0, 1, 2, 3].map((cm) => (
@@ -903,7 +898,7 @@ export default function PartographView() {
                       </div>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-col lg:flex-row gap-3">
                       <div className="flex-1">
                         <Label tip="จำนวนครั้งใน 10 นาที" className="text-base font-semibold text-gray-800 mb-1.5">การหดตัว</Label>
                         <div className="grid grid-cols-5 gap-1.5">
@@ -935,9 +930,8 @@ export default function PartographView() {
                 </Card>
 
               {/* Card 3: Maternal — BP, Pulse, Temp, Urine, Drugs */}
-              <Card className={`shadow-sm ${!isH ? "opacity-50 pointer-events-none" : ""}`}>
+              <Card className="shadow-sm">
                 <CardBody className="p-4 space-y-4">
-                  {!isH && <p className="text-xs text-amber-600 font-semibold bg-amber-50 px-3 py-1.5 rounded-lg">บันทึกรายชั่วโมง — ข้ามรอบนี้</p>}
                   <div className="flex items-center gap-2">
                     <Thermometer size={18} className="text-gray-500" />
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">สัญญาณชีพมารดา (Maternal)</p>
@@ -945,12 +939,12 @@ export default function PartographView() {
 
                     <div>
                       <Label tip="ปกติ 90-140/60-90 mmHg" className="text-sm font-semibold text-gray-700 mb-1.5">ความดันโลหิต (Blood Pressure)</Label>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                         <Input label="Systolic (ตัวบน)" size="lg" type="number" inputMode="numeric" value={bpSystolic} onValueChange={setBpSystolic} classNames={{ input: "text-lg font-bold" }} endContent={<span className="text-xs text-gray-400">mmHg</span>} />
                         <Input label="Diastolic (ตัวล่าง)" size="lg" type="number" inputMode="numeric" value={bpDiastolic} onValueChange={setBpDiastolic} classNames={{ input: "text-lg font-bold" }} endContent={<span className="text-xs text-gray-400">mmHg</span>} />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                       <div>
                         <Label tip="ปกติ 60-100 ครั้ง/นาที" className="text-sm font-semibold text-gray-700 mb-1.5">ชีพจร (Pulse)</Label>
                         <Input size="lg" type="number" inputMode="numeric" value={pulse} onValueChange={setPulse} classNames={{ input: "text-lg font-bold" }} endContent={<span className="text-xs text-gray-400">bpm</span>} />
@@ -976,15 +970,15 @@ export default function PartographView() {
                   </CardBody>
                 </Card>
 
-              {/* Bottom spacer for sticky button */}
-              <div className="h-4" />
+              {/* Bottom spacer for overlay button */}
+              <div className="h-24" />
           </div>
           </>)}
           {/* Sticky save button */}
           {nsi < COLS * 2 && (
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-3 space-y-2 z-10">
-              <Button size="lg"
-                className={`w-full h-14 text-base font-bold ${fhr ? "bg-teal-600 hover:bg-teal-700 text-white" : "bg-gray-100 text-gray-400"}`}
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-3 pb-4 bg-linear-to-t from-white via-white to-transparent pt-10">
+              <Button size="lg" radius="lg"
+                className={`w-full h-16 text-lg font-bold ${fhr ? "bg-teal-600 hover:bg-teal-700 text-white" : "bg-gray-100 text-gray-400"}`}
                 startContent={<Save size={20} />}
                 onPress={handleSave}
                 isDisabled={!fhr || parseInt(fhr) < 60 || parseInt(fhr) > 220}>
@@ -995,7 +989,7 @@ export default function PartographView() {
         </div>
       </div>
 
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl" scrollBehavior="inside"><ModalContent>{(onClose) => (<>
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="full" scrollBehavior="inside" classNames={{ base: "md:max-w-4xl md:mx-auto md:my-8 md:rounded-xl" }}><ModalContent>{(onClose) => (<>
         <ModalHeader>ประวัติ — {patient.name}</ModalHeader>
         <ModalBody><table className="w-full text-sm border-collapse"><thead><tr className="border-b-2 border-black text-left">{["#", "เวลา", "FHR", "Liq", "Mould", "Dil", "Desc", "Contr", "BP", "Pulse", "Temp"].map((h) => <th key={h} className="px-2 py-1.5 font-semibold">{h}</th>)}</tr></thead>
           <tbody>{records.map((r, i) => <tr key={i} className="border-b border-gray-200 hover:bg-gray-50"><td className="px-2 py-1 text-gray-400">{i + 1}</td><td className="px-2 py-1 font-mono font-semibold">{r.time}</td><td className={`px-2 py-1 font-semibold ${r.fetal.fhr < 110 || r.fetal.fhr > 160 ? "text-red-600" : ""}`}>{r.fetal.fhr}</td><td className="px-2 py-1">{r.fetal.liquor}</td><td className="px-2 py-1">{r.fetal.moulding}</td><td className="px-2 py-1 font-semibold">{r.labour ? r.labour.dilation : "—"}</td><td className="px-2 py-1">{r.labour ? `${r.labour.descent}/5` : "—"}</td><td className="px-2 py-1">{r.labour ? `${r.labour.contractionFreq}/${r.labour.contractionDuration.charAt(0)}` : "—"}</td><td className="px-2 py-1">{r.maternal ? `${r.maternal.bpSystolic}/${r.maternal.bpDiastolic}` : "—"}</td><td className="px-2 py-1">{r.maternal ? r.maternal.pulse : "—"}</td><td className="px-2 py-1">{r.maternal?.temperature ?? "—"}</td></tr>)}</tbody></table></ModalBody>
